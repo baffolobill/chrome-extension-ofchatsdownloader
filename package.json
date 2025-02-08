@@ -1,0 +1,42 @@
+{
+  "name": "ofchatsdownloader",
+  "version": "0.3.0",
+  "description": "Скачивает все чаты с OF в JSON-формате.",
+  "private": "true",
+  "scripts": {
+    "clean": "rimraf build",
+    "build": "cross-env NODE_ENV=development node utils/build.js",
+    "start": "cross-env NODE_ENV=development PORT=3000 node utils/webserver.js"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "css-minimizer-webpack-plugin": "^7.0.0",
+    "eslint": "^8.45.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-import": "^2.27.5",
+    "mini-css-extract-plugin": "^2.9.2",
+    "prettier": "3.0.0",
+    "sass": "^1.84.0",
+    "sass-loader": "^16.0.4",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.7.2",
+    "@popperjs/core": "^2.11.8",
+    "@types/webpack": "^5.28.1",
+    "bootstrap": "^5.3.3",
+    "buffer": "^6.0.3",
+    "clean-webpack-plugin": "4.0.0",
+    "copy-webpack-plugin": "^11.0.0",
+    "css-loader": "^7.1.2",
+    "file-loader": "6.2.0",
+    "html-loader": "4.2.0",
+    "html-webpack-plugin": "^5.5.3",
+    "rimraf": "^6.0.1",
+    "sha1": "^1.1.1",
+    "style-loader": "^4.0.0",
+    "webpack": "5.88.2",
+    "webpack-dev-server": "^4.15.1"
+  }
+}

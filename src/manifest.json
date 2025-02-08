@@ -1,0 +1,49 @@
+{
+  "name": "OF Chats Downloader",
+  "description": "Скачивает все чаты с OF в JSON-формате.",
+  "version": "0.3.0",
+  "manifest_version": 3,
+  "action": {
+    "browser_style": true,
+    "default_icon": {},
+    "default_title": "Нажмите, чтобы открыть расширение"
+  },
+  "host_permissions": [
+    "*://*.onlyfans.com/",
+    "*://onlyfans.com/"
+  ],
+  "permissions": [
+    "sidePanel",
+    "webRequest",
+    "cookies",
+    "storage",
+    "identity",
+    "scripting",
+    "activeTab",
+    "downloads",
+    "clipboardWrite",
+    "unlimitedStorage"
+  ],
+  "side_panel": {
+    "default_path": "sidebar.html"
+  },
+  "background": {
+    "service_worker": "js/background.bundle.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.onlyfans.com/*",
+        "*://*.onlyfans.com/",
+        "*://onlyfans.com/*",
+        "*://onlyfans.com/"
+      ],
+      "js": [
+        "js/content_script.bundle.js"
+      ]
+    }
+  ],
+  "icons": {
+    "128": "images/icon-128.png"
+  }
+}

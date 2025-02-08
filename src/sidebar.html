@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnlyFans Chats Downloader</title>
+</head>
+
+<body>
+    <div class="container mx-auto">
+        <h2>OnlyFans Chats Downloader</h2>
+
+        <p>Это расширение позволяет скачать всю переписку из раздела "Messages".</p>
+        <p>Если у вас много переписок, процесс может занять некоторое время.</p>
+        <button type="button" class="btn btn-primary" id="startOFDownloaderBtn">Начать скачивание чатов</button>
+    </div>
+
+    <div class="container mx-auto p-0 py-2">
+        <div id="of-download-logs" class="d-none mt-2">
+            <div class="row">
+                <div class="col">
+                    <button type="button" id="ofDownnloadLogsSaveBtn" class="mt-1 btn btn-outline-secondary btn-sm">Скачать эти логи</button>
+                </div>
+                <div class="col">
+                    <button type="button" id="ofDownnloadLogsClearBtn" class="mt-1 btn btn-outline-secondary btn-sm float-end">Очистить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container py-4 px-3 mx-auto mt-2 rounded border border-danger">
+        <div class="row">
+            <div class="col">
+                <p>Мы сохраняли часть данных в памяти браузера, чтобы уменьшить кол-во запросов к OnlyFans. После того, как проверите, что данные корректно скачались, можете очистить память, нажав на кнопку ниже.</p>
+                <p>Мы удаляем только те данные, которые сами записали.</p>
+                <p>В случае проблем со скачиванием, попробуйте очистить хранилище и начать скачивание заново.</p>
+                <button type="button" class="btn btn-outline-danger" id="clearStorageBtn"><i class="fa fa-trash"></i> Очистить хранилище</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="debugMode" class="container py-4 px-3 mx-auto mt-2 text-bg-secondary rounded">
+        <div class="row">
+            <div class="col">
+                <p>Режим отладки:</p>
+                <button type="button" class="btn btn-sm btn-outline-light" id="showAuthConfigBtn">Показать данные аутентификации</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col mt-4">
+                <div id="debugLoading" class="d-none spinner-border text-warning" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <pre id="debugOutput"></pre>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
