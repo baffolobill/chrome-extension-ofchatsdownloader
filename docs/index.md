@@ -5,7 +5,7 @@
 
 ## Установка расширения
 
-1. Скачиванием последнюю версию расширения.
+1. Скачиванием последнюю версию расширения с [этой страницы](https://github.com/baffolobill/chrome-extension-ofchatsdownloader/releases). Имя файла начинается с "chrome-extension-". Например, [chrome-extension-ofchatsdownloader-v0.3.0.zip](https://github.com/baffolobill/chrome-extension-ofchatsdownloader/releases/download/v0.3.0/chrome-extension-ofchatsdownloader-v0.3.0.zip).
 2. Извлекаем в любую папку скаченный zip-архив.
 3. Открываем в Chrome ссылку: [chrome://extensions](chrome://extensions).
 4. Включаем "Режим разработчика" ("Developer mode") (переключатель в верхнем правом углу).
