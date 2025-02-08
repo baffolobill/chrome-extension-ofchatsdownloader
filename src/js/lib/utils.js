@@ -1,5 +1,3 @@
-const containerNames = {};
-const containersEnabled = false;  //browser.contextualIdentities !== undefined;
 const desiredCookies = ['auth_id', 'sess'];
 
 /**
@@ -52,27 +50,6 @@ async function getMappedCookies(cookieStoreId) {
 }
 
 
-function showErrorMessage(cookieStoreId, isAuthError) {
-    hideErrorMessages();
-    hideControls();
-
-    const errorMessageId = isAuthError
-        ? containersEnabled
-            ? 'auth-container-error-message'
-            : 'auth-error-message'
-        : containersEnabled
-            ? 'bc-container-error-message'
-            : 'bc-error-message';
-
-    if (containersEnabled) {
-        [...document.querySelectorAll('.container-name-template')].forEach((el) => {
-            el.textContent = containerNames[cookieStoreId] || 'Default (no container)';
-        });
-    }
-
-    document.getElementById(errorMessageId).classList.remove('hidden');
-}
-
 export async function getAuthConfig(cookieStoreId) {
     const mappedCookies = await getMappedCookies(cookieStoreId);
     console.info('mappedCookies:', mappedCookies);
@@ -80,7 +57,8 @@ export async function getAuthConfig(cookieStoreId) {
      * If authId isn't specified, user is not logged into OnlyFans... or at least we assume so.
      */
     if (!mappedCookies['auth_id'] || !mappedCookies['sess']) {
-        showErrorMessage(cookieStoreId, true);
+        // showErrorMessage(cookieStoreId, true);
+        alert('Could not find valid cookie values, make sure you are logged into OnlyFans.');
         return null;
     }
 
@@ -90,7 +68,7 @@ export async function getAuthConfig(cookieStoreId) {
     console.info(`bcToken: ${bcToken} for st: ${st}`);
 
     if (!bcToken) {
-        showErrorMessage(cookieStoreId, false);
+        alert('Could not find valid x_bc value. Please open OnlyFans.com once and make sure it fully loads. If you are not logged in, please log in and refresh the page.');
         return null;
     }
 
