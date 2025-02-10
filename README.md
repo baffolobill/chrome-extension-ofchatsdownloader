@@ -2,6 +2,11 @@
 
 - [Инструкция](docs/index.md)
 
+## TODO:
+
+- Добавить возможность сохранения на наш сервер
+
+
 ## Детали
 
 Расширение основано на [этом шаблоне расширений](https://github.com/mauro1998/chrome-extension-webpack-boilerplate).

@@ -1,5 +1,5 @@
 async function getBcToken() {
-    console.error(`Started getBcToken`);
+    console.log(`Started getBcToken`);
     const ls = window.localStorage;
     if (!ls.bcTokenSha) {
         console.error(`No bcTokenSha`);
@@ -7,7 +7,7 @@ async function getBcToken() {
     }
 
     const bcToken = ls.bcTokenSha;
-    console.error(`bcToken=${bcToken}`);
+    console.log(`bcToken=${bcToken}`);
 
     /**
      * We don't have access to all cookies here, so instead we use a workaround
@@ -15,12 +15,15 @@ async function getBcToken() {
      */
     const match = new RegExp(/st=(\w{64})/).exec(document.cookie);
     const id = match[1];
-    console.error(`id=${id}`);
+    console.log(`id=${id}`);
 
     try {
         await chrome.runtime.sendMessage({
-            bcTokenSha: bcToken,
-            id: id,
+            event: 'updateBcToken',
+            data: {
+                bcTokenSha: bcToken,
+                id: id,
+            },
         });
     }
     catch (err) {

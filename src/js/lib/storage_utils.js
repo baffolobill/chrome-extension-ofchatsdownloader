@@ -22,3 +22,27 @@ export async function readLocalStorage(key) {
     });
   });
 }
+
+export async function storeLocalStorage(key, value) {
+    console.info(`Store to local storage for key:${key} value:`, value);
+  
+    chrome.storage.local.set({
+      [key]: value
+    });
+}
+
+export async function readCurrentUserLocalStorage() {
+    return await readLocalStorage('OF_current_user');
+}
+
+export async function storeCurrentLocalStorage(user) {
+    await storeLocalStorage('OF_current_user', user);
+}
+
+export async function storeSignalLocalStorage(signal) {
+  await storeLocalStorage('OF_execution_signal', signal);
+}
+
+export async function readSignalLocalStorage() {
+  return await readLocalStorage('OF_execution_signal');
+}

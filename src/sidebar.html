@@ -13,18 +13,68 @@
 
         <p>Это расширение позволяет скачать всю переписку из раздела "Messages".</p>
         <p>Если у вас много переписок, процесс может занять некоторое время.</p>
-        <button type="button" class="btn btn-primary" id="startOFDownloaderBtn">Начать скачивание чатов</button>
+        <div class="row">
+            <div class="col">
+                <button type="button" class="btn btn-sm btn-primary" id="startOFDownloaderBtn">Запустить</button>
+            </div>
+            <div class="col">
+                <button type="button" style="display: none" class="float-end btn btn-sm btn-outline-danger" id="stopOFDownloaderBtn"><i class="fa fa-circle-stop"></i> Остановить</button>
+            </div>
+        </div>
     </div>
 
     <div class="container mx-auto p-0 py-2">
         <div id="of-download-logs" class="d-none mt-2">
             <div class="row">
                 <div class="col">
+                    <span>Всего чатов: </span><span id="statsTotalChatsCount">---</span><br>
+                    <span>Из них, найдено в кэше: </span><span id="statsCachedChatsCount">---</span><br>
+                    <span>Получено чатов: </span><span id="statsFetchedChatsCount">---</span><br>
+                    <span>Осталось получить: </span><span id="statsRemainChatsCount">---</span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
                     <button type="button" id="ofDownnloadLogsSaveBtn" class="mt-1 btn btn-outline-secondary btn-sm">Скачать эти логи</button>
                 </div>
                 <div class="col">
-                    <button type="button" id="ofDownnloadLogsClearBtn" class="mt-1 btn btn-outline-secondary btn-sm float-end">Очистить</button>
+                    <button type="button" id="ofDownnloadLogsClearBtn" class="mt-1 btn btn-outline-secondary btn-sm float-end">Очистить логи</button>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container p-3 mx-auto mt-2 rounded border border-secondary">
+        <h4>Настройки</h4>
+
+        <div class="row mt-2">
+            <div class="col">
+                <div class="mb-3">
+                    <label for="configChatMessagesLimit" class="form-label">Сколько сообщений чата запрашивать за раз:</label>
+
+                    <select class="form-select form-control-sm" id="configChatMessagesLimit" aria-describedby="configChatMessagesLimitHelpBlock" aria-label="Chat Messages per request">
+                        <option value="10">10</option>
+                        <option selected value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                        <option value="500">500</option>
+                    </select>
+
+                    <div id="configChatMessagesLimitHelpBlock" class="form-text">
+                        Сам OnlyFans запрашивает по 10 сообщений за раз. В этом случае, для скачивания 1000 сообщений, потребуется выполнить 100 запросов. Если чатов много и там много сообщений, лучше выбрать значение побольше, чтобы ускорить процесс.<br>
+                        По-умолчанию, стоит "50", чтобы было не так подозрительно.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container p-3 mx-auto mt-2 rounded border border-secondary">
+        <h4>Утилиты</h4>
+
+        <div class="row mt-2">
+            <div class="col">
+                <button type="button" class="btn btn-sm btn-outline-dark" id="downloadChatsFromStorageBtn"><i class="fa fa-database"></i> Скачать сохраненные в кэше чаты</button>
             </div>
         </div>
     </div>

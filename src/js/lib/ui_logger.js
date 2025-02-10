@@ -64,7 +64,7 @@ export function UILogger(optionsParam = {}) {
    */
   var options = Object.assign({
     containerId: null,
-    panelId: "ui-logger-id",
+    panelId: "id_ui-logger",
     panelClasses: "",
     messageClasses: ""
   }, optionsParam);

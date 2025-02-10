@@ -1,7 +1,10 @@
 import { getCookieStore, getAuthConfig } from './utils';
 import { getAllChats, getMe } from './api_requests.js';
 import { getLogger } from './logs.js';
-import {readLocalStorage} from './storage_utils.js';
+import {readCurrentUserLocalStorage, readLocalStorage, storeCurrentLocalStorage, storeLocalStorage} from './storage_utils.js';
+import { flushStats } from './stats.js';
+import { sendRuntimeSignal } from './signals.js';
+import { handle_stopOFDownloaderBtn } from './ui_helpers.js';
 
 
 function downloadFileFromText(filename, content) {
@@ -16,25 +19,10 @@ function downloadFileFromText(filename, content) {
     anchorElement.remove();  // we don't need this anymore
 }
 
-
-export function showLoading(){
-    const btn = document.getElementById('startOFDownloaderBtn');
-    btn.disabled = true;
-    btn.innerHTML = `
-        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-        <span class="ps-1" role="status">Выполняется ...</span>
-    `;
-}
-
-
-export function hideLoading(){
-    const btn = document.getElementById('startOFDownloaderBtn');
-    btn.disabled = false;
-    btn.innerHTML = "Начать скачивание чатов";
-}
-
 export async function performChatsDownload(){
     var logger = getLogger();
+
+    await flushStats();
     
     const cookieStoreId = await getCookieStore();
     logger.log("Getting auth config ...");
@@ -54,40 +42,28 @@ export async function performChatsDownload(){
         cookie: authConfig['COOKIE'],
     };
 
-    logger.log("Let's check if all necessary data exists in local storage ...")
+    await storeCurrentLocalStorage(user);
 
-    // const cacheKey = `OFChats_${user.id}`;
-    let cachedData = null; //await readLocalStorage(cacheKey);
-    // console.info("Cached data: ", cachedData);
-    // if (cachedData !== null) {
-    //     logger.log("Yep, found saved data in storage. Use that data.")
-    // } else {
-    //     logger.log("No saved data found. Getting to execute some requests to OnlyFans to fetch messages ...");
-
-        logger.log("Executing request to get profile data. Looks like without this request, other one fails.");
-        // Похоже, что без этого запроса не отработают остальные запросы 
-        // на получение списка чатов и самих сообщений. Почему-то выпадает ошибка 401.
-        let responseMe = await getMe(user);
+    logger.log("Executing request to get profile data. Looks like without this request, other one fails.");
+    // Похоже, что без этого запроса не отработают остальные запросы 
+    // на получение списка чатов и самих сообщений. Почему-то выпадает ошибка 401.
+    let responseMe = await getMe(user, logger);
     
-        logger.log("Now, we are finally executing requests to fetch all messages ...");
-        let response = await getAllChats(user, logger);
-        logger.log("All messages has been fetched.");
-
-        cachedData = JSON.stringify(response);
-
-        // logger.log("Let's save in the browser cache retrieved just now messages.");
-        // chrome.storage.local.set({[cacheKey]: cachedData});
-        // logger.log("Messages has been saved in browser storage.");
-    // }
-
+    logger.log("Now, we are finally executing requests to fetch all messages ...");
+    let response = await getAllChats(user, logger);
+    logger.log("All messages has been fetched.");
+    
+    await sendRuntimeSignal('stopped');
+    handle_stopOFDownloaderBtn();
+    
     logger.log("Triggering download process of saved chats. Please wait ...");
     const downloadFilename = `model_${user.id}.json`;
+    const cachedData = JSON.stringify(response);
     downloadFileFromText(downloadFilename, cachedData);
     logger.log(`We has been triggered download process. Check download forlder for file ${downloadFilename}`);
 }
 
 export async function downloadUILogs(){
-    const downloadFilename = "logs.txt";
     let messages = [];
     const logsMessages = document
         .getElementById('of-download-logs')
@@ -96,9 +72,64 @@ export async function downloadUILogs(){
     Array.from(logsMessages).forEach(element => {
         messages.push(element.textContent);
     });
-    downloadFileFromText(downloadFilename, messages.join('\n'));
+    downloadFileFromText("logs.txt", messages.join('\n'));
 }
 
-export async function clearUILogs() {
-    document.getElementById('of-download-logs').innerHTML = "";
+
+export async function downloadChatsFromStorage(){
+    let user = await readCurrentUserLocalStorage();
+    if (!user) {
+        const cookieStoreId = await getCookieStore();
+        console.log("Getting auth config ...");
+        const authConfig = await getAuthConfig(cookieStoreId);
+
+        if (!authConfig) {
+          console.log("Couldn't calculate auth config. Exit. Try to refresh page.");
+          return;
+        }
+
+        console.log("Auth config has been calculated. Now we can perform requests to OnlyFans API.");
+
+        user = {
+            id: authConfig['USER_ID'],
+            userAgent: authConfig['USER_AGENT'],
+            xbc: authConfig['X_BC'],
+            cookie: authConfig['COOKIE'],
+        };
+
+        await storeCurrentLocalStorage(user);
+    }
+
+    let all_chats = {};
+
+    const profilesCacheKey = `OFChatProfiles_${user.id}`;
+    let cachedProfiles = await readLocalStorage(profilesCacheKey);
+    if (Array.isArray(cachedProfiles) && cachedProfiles.length) {
+      console.log(`Found ${cachedProfiles.length} chats in storage. Use them.`)
+    } else {
+        alert('Nothing found in local storage. Exit.');
+        return;
+    }
+
+    console.log("Now let's fetch messages from all chats ...");
+    for (const chatProfile of cachedProfiles) {
+        const chatId = chatProfile['user_id'];
+        
+        console.log(`Process messages fetching for chatId:${chatId} ...`);
+
+        console.log(`Let's first check, if messages already downloaded for chatId:${chatId} ...`);
+        const chatCacheKey = `OFChatMessages_${user.id}_${chatId}`;
+        let cachedMessages = await readLocalStorage(chatCacheKey);
+        if (Array.isArray(cachedMessages) && cachedMessages.length){
+            console.log(`Found ${cachedMessages.length} messages in storage for chatId:${chatId}.`);
+            all_chats[chatId] = cachedMessages;
+        }
+    }
+
+    // Uncomment for debug
+    // await new Promise(r => setTimeout(r, 5000));
+
+    const cachedData = JSON.stringify(all_chats);
+    const downloadFilename = `model_${user.id}_cached.json`;
+    downloadFileFromText(downloadFilename, cachedData);
 }

@@ -1,36 +1,17 @@
 var sha1 = require('sha1');
+import { decrStatsValue, incrStatsValue, updateStatsValue } from './stats.js';
 import {
   readLocalStorage
 } from './storage_utils.js';
 var Buffer = require('buffer/').Buffer
-
+import {
+  isReceivedStopSignal,
+  sendRuntimeSignal,
+} from './signals.js';
+import { getConfigChatMessagesLimitValue } from './ui_helpers.js';
+const fetch = require('fetch-retry')(global.fetch);
 
 const RULES_URL = 'https://raw.githubusercontent.com/deviint/onlyfans-dynamic-rules/main/dynamicRules.json';
-
-// function create_sign(link, headers) {
-//     const _time = String(Math.round(Date.now()));
-
-//     const url = new URL(link);
-//     const path = url.pathname;
-
-//     const dynamic_r = {};
-//     const static_param = dynamic_r["static_param"];
-//     const user_id = headers['user-id'];
-//     const msg = `${static_param}\n${_time}\n${path}\n${user_id}`;
-//     const message = Buffer.from(msg, 'utf-8');
-//     const _hash = crypto.createHash('sha1').update(message);
-//     const sha_1_sign = _hash.digest('hex');
-//     const sha_1_b = Buffer.from(sha_1_sign, 'ascii');
-
-//     const checksum_indexes = dynamic_r['checksum_indexes'];
-//     const checksum_constant = dynamic_r['checksum_constant'];
-//     const checksum = checksum_indexes.reduce((acc, i) => acc + sha_1_b[i], 0) + checksum_constant;
-
-
-//     headers["sign"] = dynamic_r["sign_format"].format(sha_1_sign, format(abs(checksum), 'x'))
-//     headers["time"] = _time
-// }
-
 
 
 /**
@@ -121,6 +102,35 @@ export async function makeOFRequest(url, user) {
             "x-bc": user.xbc,
             "cookie": user.cookie,
             ...sign
+        },
+        retries: 1000,
+        retryOn: async function (attempt, error, response) {
+            if (attempt >= 1000) {
+                logger.log(
+                    `Cancel retrying request because of too many attempts (attempt: ${attempt}).`
+                );
+                return false;
+            }
+            if (response.status === 401 || response.status === 403) {
+                logger.log(
+                  `Cancel retrying request because of status code ${response.status}.`
+                );
+                console.error(`
+                    Server responded with statusCode:401. Stop application. 
+                    Try to refresh page and login again.`
+                );
+                return false;
+            } else if (error !== null || response.status === 429 || response.status === 503 || response.status === 504) {
+                logger.log(
+                    `Retrying request because of status code ${response.status}. 
+                    Attempt number ${attempt + 1}`
+                );
+                console.log(`retrying, attempt number ${attempt + 1}`);
+                return true;
+            }
+        },
+        retryDelay: function (attempt, error, response) {
+            return Math.pow(2, attempt) * 1000; // 1000, 2000, 4000
         }
     })
 
@@ -129,7 +139,14 @@ export async function makeOFRequest(url, user) {
 
 
 export async function getAllProfileChatMessages(chatId, user, logger) {
-    const limit = 50;
+    let limit = 50;
+    try {
+        limit = getConfigChatMessagesLimitValue();
+    } catch(err) {
+        logger.log(`Couldn't get messages limit from config. Use default value "50".`);
+        limit = 50;
+    }
+
     let lastId = null;
     let messages = [];
 
@@ -146,6 +163,7 @@ export async function getAllProfileChatMessages(chatId, user, logger) {
         let chatsResponse = await makeOFRequest(
             `https://onlyfans.com/api2/v2/chats/${chatId}/messages?${queryParams}`,
             user,
+            logger,
         );
         logger.log(`Response status code: ${chatsResponse.status}`);
         let response = await chatsResponse.json();
@@ -175,6 +193,8 @@ export async function getAllProfileChatMessages(chatId, user, logger) {
                 createdAt: value['createdAt'],
                 id: value['id'],
                 whoWrote: whoWrote,
+                // Is message has photo, audio, video?
+                hasMedia: (value['mediaCount'] > 0 ? true : false),
             };
             messages.push(msg);
         });
@@ -195,6 +215,9 @@ export async function getAllProfileChats(user, logger) {
     let offset = 0;
     let profiles = [];
 
+    // FIXME
+    // return [];
+
     logger.log(`Going to fetch ${limit} chats per request ...`);
 
     while (true) {
@@ -205,6 +228,7 @@ export async function getAllProfileChats(user, logger) {
         let chatsResponse = await makeOFRequest(
             `https://onlyfans.com/api2/v2/chats?${queryParams}`,
             user,
+            logger,
         );
         logger.log(`Response status code: ${chatsResponse.status}`);
 
@@ -239,10 +263,11 @@ export async function getAllProfileChats(user, logger) {
     return profiles;
 }
 
-export async function getMe(user) {
+export async function getMe(user, logger) {
     let chatsResponse = await makeOFRequest(
         `https://onlyfans.com/api2/v2/users/me`,
         user,
+        logger,
     );
     let response = await chatsResponse.json();
     return response;
@@ -264,10 +289,19 @@ export async function getAllChats(user, logger){
         logger.log(`Fetched ${cachedProfiles.length} chats.`);
     }
 
+    await updateStatsValue('total', cachedProfiles.length);
+    await updateStatsValue('remains', cachedProfiles.length);
+
     console.info('profiles: ', cachedProfiles);
 
     logger.log("Now let's fetch messages from all chats ...");
     for (const chatProfile of cachedProfiles) {
+        if (await isReceivedStopSignal()) {
+            logger.log('Exit loop, because user has pressed STOP button.');
+            await sendRuntimeSignal('stop');
+            break;
+        }
+
         const chatId = chatProfile['user_id'];
         
         logger.log(`Process messages fetching for chatId:${chatId} ...`);
@@ -277,6 +311,7 @@ export async function getAllChats(user, logger){
         let cachedMessages = await readLocalStorage(chatCacheKey);
         if (Array.isArray(cachedMessages) && cachedMessages.length){
             logger.log(`Found ${cachedMessages.length} messages in storage for chatId:${chatId}.`);
+            await incrStatsValue('cached');
         } else {
             logger.log(`Nothing in cache, so fetching chatId:${chatId} messages from OnlyFans ...`);
             cachedMessages = await getAllProfileChatMessages(chatId, user, logger);
@@ -285,21 +320,14 @@ export async function getAllChats(user, logger){
             logger.log(`Saving chatId:${chatId} messages in local storage ...`);
             chrome.storage.local.set({[chatCacheKey]: cachedMessages});
             logger.log(`ChatId:${chatId} messages has been saved in browser storage.`);
+            await incrStatsValue('fetched');
         }
+        await decrStatsValue('remains');
         all_chats[chatId] = cachedMessages;
+
+        // FIXME:
+        // await new Promise(r => setTimeout(r, 5000));
     }
 
     return all_chats;
-}
-
-export async function fetchHash(user) {
-  const res = await fetch('https://cdn2.onlyfans.com/hash/', {
-    headers: {
-      'accept': '*/*',
-      'Referer': 'https://onlyfans.com/',
-      "user-agent": user.userAgent,
-    }
-  })
-
-  return await res.text()
 }

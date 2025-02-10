@@ -5,7 +5,7 @@ const ls = chrome.storage.local;
  */
 function storeBcTokens(bcTokens)
 {
-    console.error('Started storeBcTokens with bcTokens:', bcTokens);
+    console.log('Started storeBcTokens with bcTokens:', bcTokens);
     ls.set({'bcTokens': bcTokens});
 }
 
@@ -28,20 +28,28 @@ async function getStoredBcTokens()
     });
 }
 
-async function handleBcToken(data)
-{
-    console.error('Started handleBcToken with data:', data);
+async function handleBcToken(data) {
+    console.log('Started handleBcToken with data:', data);
     const { bcTokenSha, id } = data;
     
     const bcTokens = await getStoredBcTokens();
-    console.error('bcTokens:', bcTokens);
+    console.log('bcTokens:', bcTokens);
     bcTokens[id] = bcTokenSha;
     storeBcTokens(bcTokens);
+}
 
+async function handleOFEvent(data) {
+    console.log('Started handleOFEvent with data:', data);
+    const event = data.event;
+
+    if (event === 'updateBcToken') {
+        await handleBcToken(data.data);
+    }
+    
     return true;
 }
 
-chrome.runtime.onMessage.addListener(handleBcToken);
+chrome.runtime.onMessage.addListener(handleOFEvent);
 
 
 // Allows users to open the side panel by clicking on the action toolbar icon

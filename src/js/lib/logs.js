@@ -12,3 +12,8 @@ export function getLogger() {
 
     return logger;
 }
+
+export function sendUILog(msg){
+    var logger = getLogger();
+    logger.log(msg);
+}
