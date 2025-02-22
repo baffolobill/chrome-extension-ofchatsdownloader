@@ -36,14 +36,27 @@ export async function clearUILogs() {
     document.getElementById('id_ui-logger').innerHTML = "";
 }
 
+/**
+ * Config
+ */
 export function getConfigChatMessagesLimitValue(){
     return parseInt(document.getElementById('configChatMessagesLimit').value);
+}
+export function getConfigRequestBackoffDelayValue(){
+    return document.getElementById('configRequestBackoffDelay').value;
+}
+export function getConfigRequestBackoffAttemptsValue(){
+    return parseInt(document.getElementById('configRequestBackoffAttempts').value);
 }
 
 export function lockConfigUI() {
     document.getElementById('configChatMessagesLimit').disabled = true;
+    document.getElementById('configRequestBackoffDelay').disabled = true;
+    document.getElementById('configRequestBackoffAttempts').disabled = true;
 }
 
 export function unlockConfigUI() {
     document.getElementById('configChatMessagesLimit').disabled = false;
+    document.getElementById('configRequestBackoffDelay').disabled = false;
+    document.getElementById('configRequestBackoffAttempts').disabled = false;
 }

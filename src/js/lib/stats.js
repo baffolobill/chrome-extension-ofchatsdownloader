@@ -1,6 +1,6 @@
 import {readCurrentUserLocalStorage, readLocalStorage} from './storage_utils.js';
 
-const STATS_KEYS = ['total', 'cached', 'fetched', 'remains'];
+const STATS_KEYS = ['total', 'cached', 'fetched', 'remains', 'lastrequesttimems'];
 
 export async function updateStatsValue(key, value) {
     const user = await readCurrentUserLocalStorage();
@@ -48,6 +48,7 @@ export async function renderStats(){
         'cached': 'statsCachedChatsCount',
         'fetched': 'statsFetchedChatsCount',
         'remains': 'statsRemainChatsCount',
+        'lastrequesttimems': 'statsLastRequestTimeMs',
     };
     STATS_KEYS.forEach(async function(statsKey){
         const statsValue = await getStatsValue(statsKey);

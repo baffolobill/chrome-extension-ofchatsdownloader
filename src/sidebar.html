@@ -30,7 +30,8 @@
                     <span>Всего чатов: </span><span id="statsTotalChatsCount">---</span><br>
                     <span>Из них, найдено в кэше: </span><span id="statsCachedChatsCount">---</span><br>
                     <span>Получено чатов: </span><span id="statsFetchedChatsCount">---</span><br>
-                    <span>Осталось получить: </span><span id="statsRemainChatsCount">---</span>
+                    <span>Осталось получить: </span><span id="statsRemainChatsCount">---</span><br>
+                    <span>Last Request Time (ms): </span><span id="statsLastRequestTimeMs">---</span>
                 </div>
             </div>
             <div class="row">
@@ -63,6 +64,37 @@
                     <div id="configChatMessagesLimitHelpBlock" class="form-text">
                         Сам OnlyFans запрашивает по 10 сообщений за раз. В этом случае, для скачивания 1000 сообщений, потребуется выполнить 100 запросов. Если чатов много и там много сообщений, лучше выбрать значение побольше, чтобы ускорить процесс.<br>
                         По-умолчанию, стоит "50", чтобы было не так подозрительно.
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="configRequestBackoffDelay" class="form-label">Режим повтора запроса:</label>
+
+                    <select class="form-select form-control-sm" id="configRequestBackoffDelay" aria-describedby="configRequestBackoffDelayHelpBlock" aria-label="Failed request backoff mode">
+                        <option value="stop">Показать ошибку</option>
+                        <option selected value="retry-2s">Повторять через 2 сек.</option>
+                        <option value="retry-exp">Повторять через экспон. время</option>
+                    </select>
+
+                    <div id="configRequestBackoffDelayHelpBlock" class="form-text">
+                        Что делать, если не удасться получить успешный ответ от OnlyFans?<br>
+                        В случае проблем с интернетом или самим OnlyFans, запрос может не пройти. Также,
+                        если отправлять их слишком часто, можно получить в ответ ошибку.<br>
+                        Есть два режима повтора:<br>
+                        - через равные промежутки времени - 2 секунды;<br>
+                        - через экспон. время - 1, 2, 4, 8 сек. и т.д.
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="configRequestBackoffAttempts" class="form-label">Кол-во повторов:</label>
+
+                    <select class="form-select form-control-sm" id="configRequestBackoffAttempts" aria-describedby="configRequestBackoffAttemptsHelpBlock" aria-label="Failed request backoff attempts">
+                        <option value="3">3</option>
+                        <option selected value="10">10</option>
+                        <option value="1000">1000</option>
+                    </select>
+
+                    <div id="configRequestBackoffAttemptsHelpBlock" class="form-text">
+                        Сколько раз повторять выполнять запрос, перед выдачей ошибки.
                     </div>
                 </div>
             </div>

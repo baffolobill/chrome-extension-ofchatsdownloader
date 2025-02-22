@@ -8,7 +8,7 @@ import {
   isReceivedStopSignal,
   sendRuntimeSignal,
 } from './signals.js';
-import { getConfigChatMessagesLimitValue } from './ui_helpers.js';
+import { getConfigChatMessagesLimitValue, getConfigRequestBackoffAttemptsValue, getConfigRequestBackoffDelayValue } from './ui_helpers.js';
 const fetch = require('fetch-retry')(global.fetch);
 
 const RULES_URL = 'https://raw.githubusercontent.com/deviint/onlyfans-dynamic-rules/main/dynamicRules.json';
@@ -89,9 +89,21 @@ async function getRules() {
  * @param {User} user - The user object containing necessary information
  * @returns {Promise<Response>} The response from the API
  */
-export async function makeOFRequest(url, user) {
+export async function makeOFRequest(url, user, logger) {
+    const numRetries = getConfigRequestBackoffAttemptsValue();
+    const backoffMode = getConfigRequestBackoffDelayValue();
     const rules = await getRules()
     const sign = await signRequest(rules, {endpoint: url, "user-id": user.id})
+    const beforeFetchTime = performance.now();
+
+    // console.error('REMOVE TEST CODE BELOW:');
+    // if (url.startsWith('https://onlyfans.com/api2/v2/chats?')) {
+    //     url = 'https://httpstat.us/500';
+    // }
+    // if (url.startsWith('https://onlyfans.com/api2/v2/chats/')) {
+    //     url = 'https://httpstat.us/429';
+    // }
+    
     const res = await fetch(url, {
         headers: {
             'accept': 'application/json, text/plain, */*',
@@ -103,24 +115,37 @@ export async function makeOFRequest(url, user) {
             "cookie": user.cookie,
             ...sign
         },
-        retries: 1000,
+        retries: numRetries,
         retryOn: async function (attempt, error, response) {
-            if (attempt >= 1000) {
+            console.log(`Request attempt: ${attempt}. Response code: ${response.status}. Error: `, error);
+
+            if (backoffMode === 'stop') {
+                console.warn(`Request failed. Retry is disabled by user.`);
+                logger.log(`Request failed. Retry is disabled by user.`);
+                return false;
+            }
+
+            if (attempt >= numRetries) {
+                console.error(
+                    `Cancel retrying request because of too many attempts (attempt: ${attempt} from: ${numRetries}).`
+                );
                 logger.log(
-                    `Cancel retrying request because of too many attempts (attempt: ${attempt}).`
+                    `Cancel retrying request because of too many attempts (attempt: ${attempt} from: ${numRetries}).`
                 );
                 return false;
             }
+
             if (response.status === 401 || response.status === 403) {
-                logger.log(
-                  `Cancel retrying request because of status code ${response.status}.`
-                );
                 console.error(`
-                    Server responded with statusCode:401. Stop application. 
+                    Server responded with statusCode:${response.status}. Stop application. 
                     Try to refresh page and login again.`
                 );
+                logger.log(
+                  `Cancel retrying request because authentication is required (status code ${response.status}).`
+                );
                 return false;
-            } else if (error !== null || response.status === 429 || response.status === 503 || response.status === 504) {
+            } 
+            if (error !== null || response.status === 429 || response.status === 503 || response.status === 504) {
                 logger.log(
                     `Retrying request because of status code ${response.status}. 
                     Attempt number ${attempt + 1}`
@@ -128,11 +153,31 @@ export async function makeOFRequest(url, user) {
                 console.log(`retrying, attempt number ${attempt + 1}`);
                 return true;
             }
+
+            return false;
         },
         retryDelay: function (attempt, error, response) {
-            return Math.pow(2, attempt) * 1000; // 1000, 2000, 4000
+            if (backoffMode === 'retry-2s') {
+                logger.log('Next retry after 2 seconds delay ...');
+                return 2000;
+            } else if (backoffMode === 'retry-exp') {
+                const delayTime = Math.pow(2, attempt) * 1000; // 1000, 2000, 4000
+                logger.log(`Next retry attempt (${attempt}) after ${delayTime/1000} seconds delay ...`);
+                return delayTime;
+            } else if (backoffMode === 'stop') {
+                alert(`Request failed. Retry is disabled.`);
+            } else {
+                alert(`Unknown retry mode: ${backoffMode}`);
+            }
+            return null;
         }
     })
+    const afterFetchTime = performance.now();
+
+    const requestTime = Math.ceil(afterFetchTime - beforeFetchTime);
+    logger.log(`Request time:${requestTime} ms. URL: ${url}. Started At: ${beforeFetchTime}. Finished At: ${afterFetchTime}.`);
+    console.log(`Request time:${requestTime} ms. URL: ${url}. Started At: ${beforeFetchTime}. Finished At: ${afterFetchTime}.`);
+    await updateStatsValue('lastrequesttimems', requestTime);
 
     return res
 }
@@ -166,6 +211,14 @@ export async function getAllProfileChatMessages(chatId, user, logger) {
             logger,
         );
         logger.log(`Response status code: ${chatsResponse.status}`);
+        console.log(`Response status code: ${chatsResponse.status}`);
+        if (!chatsResponse?.ok) {
+            console.error(`Request "getAllProfileChatMessages" responded with code: ${chatsResponse?.status}.`);
+            logger.log(`Request "getAllProfileChatMessages" responded with code: ${chatsResponse?.status}.`);
+            alert(`Couldn't fetch messages. Contact with support and send logs.`);
+            return null;
+        }
+
         let response = await chatsResponse.json();
         console.info(`messages for chatId:${chatId} request: `, response);
         const responseMessages = response.list || [];
@@ -231,6 +284,13 @@ export async function getAllProfileChats(user, logger) {
             logger,
         );
         logger.log(`Response status code: ${chatsResponse.status}`);
+        console.log(`Response status code: ${chatsResponse.status}`);
+        if (!chatsResponse?.ok) {
+            console.error(`Request "getAllProfileChats" responded with code: ${chatsResponse?.status}.`);
+            logger.log(`Request "getAllProfileChats" responded with code: ${chatsResponse?.status}.`);
+            alert(`Couldn't fetch chats. Contact with support and send logs.`);
+            return null;
+        }
 
         let response = await chatsResponse.json();
         console.info('chats request: ', response);
@@ -264,13 +324,19 @@ export async function getAllProfileChats(user, logger) {
 }
 
 export async function getMe(user, logger) {
-    let chatsResponse = await makeOFRequest(
+    let response = await makeOFRequest(
         `https://onlyfans.com/api2/v2/users/me`,
         user,
         logger,
     );
-    let response = await chatsResponse.json();
-    return response;
+    if (!response?.ok) {
+        console.error(`Request "getMe" responded with code: ${response?.status}.`);
+        logger.log(`Request "getMe" responded with code: ${response?.status}.`);
+        alert(`Couldn't perform test request. Contact with support and send logs.`);
+        return null;
+    }
+    let responseData = await response.json();
+    return responseData;
 }
 
 
@@ -285,6 +351,9 @@ export async function getAllChats(user, logger){
     } else {
         logger.log("Nothing in cache, so fetching chats from OnlyFans ...");
         cachedProfiles = await getAllProfileChats(user, logger);
+        if (cachedProfiles === null) {
+            return false;
+        }
         chrome.storage.local.set({[profilesCacheKey]: cachedProfiles});
         logger.log(`Fetched ${cachedProfiles.length} chats.`);
     }
@@ -315,6 +384,9 @@ export async function getAllChats(user, logger){
         } else {
             logger.log(`Nothing in cache, so fetching chatId:${chatId} messages from OnlyFans ...`);
             cachedMessages = await getAllProfileChatMessages(chatId, user, logger);
+            if (cachedMessages === null){
+                return false;
+            }
             logger.log(`Fetched ${cachedMessages.length} messages for chatId:${chatId}.`);
 
             logger.log(`Saving chatId:${chatId} messages in local storage ...`);

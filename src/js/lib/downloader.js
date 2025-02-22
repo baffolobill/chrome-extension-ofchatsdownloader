@@ -48,9 +48,17 @@ export async function performChatsDownload(){
     // Похоже, что без этого запроса не отработают остальные запросы 
     // на получение списка чатов и самих сообщений. Почему-то выпадает ошибка 401.
     let responseMe = await getMe(user, logger);
+    if (responseMe === null){
+        return false;
+    }
     
     logger.log("Now, we are finally executing requests to fetch all messages ...");
     let response = await getAllChats(user, logger);
+    if (!response) {
+        console.log('Nothing has been fetched. Exit. Response: ', response);
+        logger.log('Nothing has been fetched. Exit.');
+        return false;
+    }
     logger.log("All messages has been fetched.");
     
     await sendRuntimeSignal('stopped');

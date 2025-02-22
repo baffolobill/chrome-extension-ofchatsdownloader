@@ -1,7 +1,7 @@
 {
   "name": "OF Chats Downloader",
   "description": "Скачивает все чаты с OF в JSON-формате.",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "manifest_version": 3,
   "action": {
     "browser_style": true,
