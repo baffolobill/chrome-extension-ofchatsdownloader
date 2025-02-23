@@ -103,6 +103,9 @@ export async function makeOFRequest(url, user, logger) {
     // if (url.startsWith('https://onlyfans.com/api2/v2/chats/')) {
     //     url = 'https://httpstat.us/429';
     // }
+    // if (url.startsWith('https://onlyfans.com/api2/v2/chats/')) {
+    //     url = 'https://httpstat.us/404';
+    // }
     
     const res = await fetch(url, {
         headers: {
@@ -212,7 +215,11 @@ export async function getAllProfileChatMessages(chatId, user, logger) {
         );
         logger.log(`Response status code: ${chatsResponse.status}`);
         console.log(`Response status code: ${chatsResponse.status}`);
-        if (!chatsResponse?.ok) {
+        if (chatsResponse.status === 404) {
+            console.log(`Got status 404 for chatId:${chatId}. Maybe it was deleted. Return emtpy array.`);
+            logger.log(`Got status 404 for chatId:${chatId}. Maybe it was deleted. Return emtpy array.`);
+            return [];
+        } else if (!chatsResponse?.ok) {
             console.error(`Request "getAllProfileChatMessages" responded with code: ${chatsResponse?.status}.`);
             logger.log(`Request "getAllProfileChatMessages" responded with code: ${chatsResponse?.status}.`);
             alert(`Couldn't fetch messages. Contact with support and send logs.`);
