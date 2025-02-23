@@ -218,7 +218,7 @@ export async function getAllProfileChatMessages(chatId, user, logger) {
         if (chatsResponse.status === 404) {
             console.log(`Got status 404 for chatId:${chatId}. Maybe it was deleted. Return emtpy array.`);
             logger.log(`Got status 404 for chatId:${chatId}. Maybe it was deleted. Return emtpy array.`);
-            return [];
+            break;
         } else if (!chatsResponse?.ok) {
             console.error(`Request "getAllProfileChatMessages" responded with code: ${chatsResponse?.status}.`);
             logger.log(`Request "getAllProfileChatMessages" responded with code: ${chatsResponse?.status}.`);
