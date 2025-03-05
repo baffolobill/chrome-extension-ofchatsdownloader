@@ -59,6 +59,7 @@
                         <option value="100">100</option>
                         <option value="200">200</option>
                         <option value="500">500</option>
+                        <option value="1000">1000</option>
                     </select>
 
                     <div id="configChatMessagesLimitHelpBlock" class="form-text">
@@ -95,6 +96,24 @@
 
                     <div id="configRequestBackoffAttemptsHelpBlock" class="form-text">
                         Сколько раз повторять выполнять запрос, перед выдачей ошибки.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="configChatsLimit" class="form-label">Сколько чатов запрашивать за раз:</label>
+                
+                    <select class="form-select form-control-sm" id="configChatsLimit" aria-describedby="configChatsLimitHelpBlock" aria-label="Chats per request">
+                        <option value="10">10</option>
+                        <option selected value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                        <option value="500">500</option>
+                        <option value="1000">1000</option>
+                    </select>
+                
+                    <div id="configChatsLimitHelpBlock" class="form-text">
+                        Сам OnlyFans запрашивает по 10 чатов (контактов) за раз. В этом случае, для получения 1000 контактов, потребуется выполнить 100 запросов. Если чатов много, лучше выбрать значение побольше, чтобы ускорить процесс.<br>
+                        По-умолчанию, стоит "50", чтобы было не так подозрительно.
                     </div>
                 </div>
             </div>

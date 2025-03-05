@@ -8,7 +8,7 @@ import {
   isReceivedStopSignal,
   sendRuntimeSignal,
 } from './signals.js';
-import { getConfigChatMessagesLimitValue, getConfigRequestBackoffAttemptsValue, getConfigRequestBackoffDelayValue } from './ui_helpers.js';
+import { getConfigChatMessagesLimitValue, getConfigChatsLimitValue, getConfigRequestBackoffAttemptsValue, getConfigRequestBackoffDelayValue } from './ui_helpers.js';
 const fetch = require('fetch-retry')(global.fetch);
 
 const RULES_URL = 'https://raw.githubusercontent.com/deviint/onlyfans-dynamic-rules/main/dynamicRules.json';
@@ -271,7 +271,13 @@ export async function getAllProfileChatMessages(chatId, user, logger) {
 }
 
 export async function getAllProfileChats(user, logger) {
-    const limit = 50;
+    let limit = 50;
+    try {
+        limit = getConfigChatsLimitValue();
+    } catch(err) {
+        logger.log(`Couldn't get chats limit from config. Use default value "50".`);
+        limit = 50;
+    }
     let offset = 0;
     let profiles = [];
 

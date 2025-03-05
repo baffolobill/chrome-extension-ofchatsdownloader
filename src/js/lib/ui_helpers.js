@@ -42,6 +42,9 @@ export async function clearUILogs() {
 export function getConfigChatMessagesLimitValue(){
     return parseInt(document.getElementById('configChatMessagesLimit').value);
 }
+export function getConfigChatsLimitValue(){
+    return parseInt(document.getElementById('configChatsLimit').value);
+}
 export function getConfigRequestBackoffDelayValue(){
     return document.getElementById('configRequestBackoffDelay').value;
 }
@@ -51,12 +54,14 @@ export function getConfigRequestBackoffAttemptsValue(){
 
 export function lockConfigUI() {
     document.getElementById('configChatMessagesLimit').disabled = true;
+    document.getElementById('configChatsLimit').disabled = true;
     document.getElementById('configRequestBackoffDelay').disabled = true;
     document.getElementById('configRequestBackoffAttempts').disabled = true;
 }
 
 export function unlockConfigUI() {
     document.getElementById('configChatMessagesLimit').disabled = false;
+    document.getElementById('configChatsLimit').disabled = false;
     document.getElementById('configRequestBackoffDelay').disabled = false;
     document.getElementById('configRequestBackoffAttempts').disabled = false;
 }
