@@ -135,7 +135,7 @@ export async function downloadChatsFromStorage(){
     }
 
     // Uncomment for debug
-    // await new Promise(r => setTimeout(r, 5000));
+    // await new Promise(r => setTimeout(r, 50000));
 
     const cachedData = JSON.stringify(all_chats);
     const downloadFilename = `model_${user.id}_cached.json`;

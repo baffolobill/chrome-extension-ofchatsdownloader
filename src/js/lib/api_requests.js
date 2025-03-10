@@ -411,7 +411,7 @@ export async function getAllChats(user, logger){
         all_chats[chatId] = cachedMessages;
 
         // FIXME:
-        // await new Promise(r => setTimeout(r, 5000));
+        // await new Promise(r => setTimeout(r, 50000));
     }
 
     return all_chats;

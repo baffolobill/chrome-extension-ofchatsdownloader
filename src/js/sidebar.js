@@ -27,6 +27,12 @@ import { sendUILog } from './lib/logs.js';
 async function initDownloader(){
     const startOFDownloaderBtn = document.getElementById('startOFDownloaderBtn');
     startOFDownloaderBtn.addEventListener('click', async () => {
+        // Prevent system from go in sleep mode
+        try {
+            chrome.power.requestKeepAwake('system');
+        } catch(err) {
+            console.error("Couldn't enable system power mode to prevent sleep mode.")
+        }
         lockConfigUI();
         showLoading();
         showStopDownloadBtn();
@@ -42,6 +48,9 @@ async function initDownloader(){
         hideStopDownloadBtn();
         unlockConfigUI();
         await storeSignalLocalStorage('stopped');
+
+        // Allow system to keep in sleep mode
+        chrome.power.releaseKeepAwake();
     });
     
     const ofDownnloadLogsSaveBtn = document.getElementById('ofDownnloadLogsSaveBtn');
@@ -67,6 +76,24 @@ async function initDownloader(){
             <i class="fa fa-database"></i> Скачать сохраненные в кэше чаты
         `;
     });
+
+    const resetStartStopBtn = document.getElementById('resetStartStopBtn');
+    resetStartStopBtn.addEventListener('click', async () => {
+        resetStartStopBtn.disabled = true;
+        resetStartStopBtn.innerHTML = `
+            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+            <span class="ps-1" role="status">Выполняется ...</span>
+        `;
+        hideLoading();
+        hideStopDownloadBtn();
+        unlockConfigUI();
+        await storeSignalLocalStorage('stop');
+        chrome.power.releaseKeepAwake();
+        resetStartStopBtn.disabled = false;
+        resetStartStopBtn.innerHTML = `
+            <i class="fa fa-stop"></i> Reset Start/Stop Buttons
+        `;
+    });
     
     const stopOFDownloaderBtn = document.getElementById('stopOFDownloaderBtn');
     stopOFDownloaderBtn.addEventListener('click', async () => {
@@ -78,6 +105,9 @@ async function initDownloader(){
             await storeSignalLocalStorage('stop');
             sendUILog('Received STOP signal from user. Stopping ...');
         }
+        sendUILog('Disabling power system mode ...');
+        chrome.power.releaseKeepAwake();
+        sendUILog('Power mode has been disabled.');
     });
 }
 
