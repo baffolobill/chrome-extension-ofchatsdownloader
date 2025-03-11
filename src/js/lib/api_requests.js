@@ -367,7 +367,7 @@ export async function getAllChats(user, logger){
         if (cachedProfiles === null) {
             return false;
         }
-        chrome.storage.local.set({[profilesCacheKey]: cachedProfiles});
+        await chrome.storage.local.set({[profilesCacheKey]: cachedProfiles});
         logger.log(`Fetched ${cachedProfiles.length} chats.`);
     }
 
@@ -403,7 +403,7 @@ export async function getAllChats(user, logger){
             logger.log(`Fetched ${cachedMessages.length} messages for chatId:${chatId}.`);
 
             logger.log(`Saving chatId:${chatId} messages in local storage ...`);
-            chrome.storage.local.set({[chatCacheKey]: cachedMessages});
+            await chrome.storage.local.set({[chatCacheKey]: cachedMessages});
             logger.log(`ChatId:${chatId} messages has been saved in browser storage.`);
             await incrStatsValue('fetched');
         }

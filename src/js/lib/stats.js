@@ -8,7 +8,7 @@ export async function updateStatsValue(key, value) {
         return null;
     }
     const statsCacheKey = `OFStats_${user.id}_${key}`;
-    chrome.storage.local.set({
+    await chrome.storage.local.set({
       [statsCacheKey]: value
     });
 

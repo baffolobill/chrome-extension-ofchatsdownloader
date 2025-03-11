@@ -26,7 +26,7 @@ export async function readLocalStorage(key) {
 export async function storeLocalStorage(key, value) {
     console.info(`Store to local storage for key:${key} value:`, value);
   
-    chrome.storage.local.set({
+    await chrome.storage.local.set({
       [key]: value
     });
 }
